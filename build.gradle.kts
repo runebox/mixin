@@ -3,7 +3,6 @@ plugins {
 }
 
 allprojects {
-
     group = "io.runebox.mixin"
     version = "1.0.0"
 
