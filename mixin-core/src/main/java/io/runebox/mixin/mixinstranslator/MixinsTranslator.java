@@ -1,0 +1,47 @@
+package io.runebox.mixin.mixinstranslator;
+
+import io.runebox.mixin.mixinstranslator.impl.AnnotationTranslatorManager;
+import io.runebox.mixin.mixinstranslator.impl.IAnnotationTranslator;
+import io.runebox.mixin.transformer.IAnnotationHandlerPreprocessor;
+import org.objectweb.asm.Type;
+import org.objectweb.asm.tree.AnnotationNode;
+import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.FieldNode;
+import org.objectweb.asm.tree.MethodNode;
+
+import java.util.List;
+
+/**
+ * Translate annotation from Mixins to RuneBox Mixins<br>
+ * Since RuneBox Mixins has some differences to Mixins this is not a 100% perfect translation<br>
+ * Some features may not be supported.<br>
+ * Some fields which are not supported still got copied over to simplify the copy-paste action<br>
+ * You can recognize them by the @Deprecated annotation
+ */
+public class MixinsTranslator implements IAnnotationHandlerPreprocessor {
+
+    @Override
+    public void process(ClassNode node) {
+        this.translate(node.visibleAnnotations);
+        this.translate(node.invisibleAnnotations);
+        for (FieldNode field : node.fields) {
+            this.translate(field.visibleAnnotations);
+            this.translate(field.invisibleAnnotations);
+        }
+        for (MethodNode method : node.methods) {
+            this.translate(method.visibleAnnotations);
+            this.translate(method.invisibleAnnotations);
+
+            CallbackRewriter.rewrite(method);
+        }
+    }
+
+    private void translate(final List<AnnotationNode> annotations) {
+        if (annotations == null) return;
+        for (AnnotationNode annotation : annotations) {
+            IAnnotationTranslator translator = AnnotationTranslatorManager.getTranslator(Type.getType(annotation.desc));
+            if (translator != null) translator.translate(annotation);
+        }
+    }
+
+}

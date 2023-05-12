@@ -1,0 +1,30 @@
+package io.runebox.mixin.utils.loader;
+
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.net.URL;
+import java.net.URLConnection;
+
+/**
+ * Util class to assist with in memory resources.
+ */
+class BytesURLConnection extends URLConnection {
+
+    private final byte[] data;
+
+    BytesURLConnection(final URL url, final byte[] data) {
+        super(url);
+
+        this.data = data;
+    }
+
+    @Override
+    public void connect() {
+    }
+
+    @Override
+    public InputStream getInputStream() {
+        return new ByteArrayInputStream(data);
+    }
+
+}

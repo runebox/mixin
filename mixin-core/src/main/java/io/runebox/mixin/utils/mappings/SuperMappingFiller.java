@@ -1,0 +1,112 @@
+package io.runebox.mixin.utils.mappings;
+
+import io.runebox.mixin.annotation.CTransformer;
+import io.runebox.mixin.utils.tree.ClassTree;
+import io.runebox.mixin.utils.tree.IClassProvider;
+import org.objectweb.asm.Type;
+import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.FieldNode;
+import org.objectweb.asm.tree.MethodNode;
+
+import java.lang.reflect.Modifier;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import static io.runebox.mixin.utils.ASMUtils.slash;
+
+/**
+ * Util to complete mappings which are missing some information about overridden methods.
+ */
+public class SuperMappingFiller {
+
+    /**
+     * Fill all super mappings for the given transformer targets.<br>
+     * Missing mappings are added to the given remapper.
+     *
+     * @param transformer   The class node of the transformer
+     * @param remapper      The remapper to use
+     * @param classTree     The class tree to use
+     * @param classProvider The class provider to use
+     */
+    public static void fillTransformerSuperMembers(final ClassNode transformer, final MapRemapper remapper, final ClassTree classTree, final IClassProvider classProvider) {
+        List<Object> annotation;
+        if (transformer.invisibleAnnotations == null || (annotation = transformer.invisibleAnnotations.stream().filter(a -> a.desc.equals(Type.getDescriptor(CTransformer.class))).map(a -> a.values).findFirst().orElse(null)) == null) {
+            throw new IllegalStateException("Transformer does not have CTransformer annotation");
+        }
+        for (int i = 0; i < annotation.size(); i += 2) {
+            String key = (String) annotation.get(i);
+            Object value = annotation.get(i + 1);
+
+            if (key.equals("value")) {
+                List<Type> classesList = (List<Type>) value;
+                for (Type type : classesList) {
+                    ClassTree.TreePart treePart = classTree.getTreePart(classProvider, remapper.mapSafe(type.getInternalName()));
+                    Set<ClassNode> superClasses = treePart.getParsedSuperClasses(classProvider, false).stream().map(ClassTree.TreePart::getNode).collect(Collectors.toSet());
+                    fillSuperMembers(treePart.getNode(), superClasses, remapper);
+                }
+            } else if (key.equals("name")) {
+                List<String> classesList = (List<String>) value;
+                for (String className : classesList) {
+                    ClassTree.TreePart treePart = classTree.getTreePart(classProvider, remapper.mapSafe(slash(className)));
+                    Set<ClassNode> superClasses = treePart.getParsedSuperClasses(classProvider, false).stream().map(ClassTree.TreePart::getNode).collect(Collectors.toSet());
+                    fillSuperMembers(treePart.getNode(), superClasses, remapper);
+                }
+            }
+        }
+    }
+
+    /**
+     * Fill all super mappings for the given class.<br>
+     * All input classes <b>must</b> be in the target format of the remapper.<br>
+     * Missing mappings are added to the given remapper.
+     *
+     * @param node         The class node
+     * @param superClasses The super classes of the given class
+     * @param remapper     The remapper to use
+     */
+    public static void fillSuperMembers(final ClassNode node, final Set<ClassNode> superClasses, final MapRemapper remapper) {
+        MapRemapper reverseRemapper = remapper.reverse();
+        for (ClassNode superClass : superClasses) {
+            for (FieldNode field : superClass.fields) {
+                if (Modifier.isStatic(field.access)) continue;
+                if (Modifier.isPrivate(field.access)) continue;
+                String mappedName = reverseRemapper.mapFieldName(superClass.name, field.name, field.desc);
+                if (field.name.equals(mappedName)) continue;
+                remapper.addFieldMapping(reverseRemapper.mapSafe(node.name), mappedName, reverseRemapper.mapDesc(field.desc), field.name, true);
+            }
+            for (MethodNode method : superClass.methods) {
+                if (Modifier.isStatic(method.access)) continue;
+                if (Modifier.isPrivate(method.access)) continue;
+                String mappedName = reverseRemapper.mapMethodName(superClass.name, method.name, method.desc);
+                if (method.name.equals(mappedName)) continue;
+                remapper.addMethodMapping(reverseRemapper.mapSafe(node.name), mappedName, reverseRemapper.mapMethodDesc(method.desc), method.name, true);
+            }
+        }
+    }
+
+    /**
+     * Fill all super mappings for all classes found in the given remapper.<br>
+     * If a class could not be found the mappings for it will be skipped.<br>
+     * Missing mappings are added to the given remapper.
+     *
+     * @param remapper      The remapper to use
+     * @param classTree     The class tree to use
+     * @param classProvider The class provider to use
+     */
+    public static void fillAllSuperMembers(final MapRemapper remapper, final ClassTree classTree, final IClassProvider classProvider) {
+        for (Map.Entry<String, String> entry : new HashMap<>(remapper.getMappings()).entrySet()) {
+            if (entry.getKey().contains(".")) continue;
+            String obfClass = entry.getValue();
+            try {
+                ClassTree.TreePart treePart = classTree.getTreePart(classProvider, obfClass);
+                Set<ClassNode> superClasses = treePart.getParsedSuperClasses(classProvider, false).stream().map(ClassTree.TreePart::getNode).collect(Collectors.toSet());
+                SuperMappingFiller.fillSuperMembers(treePart.getNode(), superClasses, remapper);
+            } catch (Throwable ignored) {
+            }
+        }
+    }
+
+}
