@@ -4,7 +4,7 @@ plugins {
 }
 
 dependencies {
-    implementation(project(":mixin-annotation"))
+    api(project(":mixin-annotation"))
     api("org.ow2.asm:asm:_")
     api("org.ow2.asm:asm-commons:_")
     api("org.ow2.asm:asm-util:_")
@@ -12,14 +12,6 @@ dependencies {
     implementation("com.google.guava:guava:_")
     implementation("org.tinylog:tinylog-api-kotlin:_")
     implementation("org.tinylog:tinylog-impl:_")
-}
-
-tasks.getByName<Jar>("jar") {
-    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-    from(configurations.runtimeClasspath.get().map {
-        if(it.isDirectory) it
-        else zipTree(it)
-    })
 }
 
 

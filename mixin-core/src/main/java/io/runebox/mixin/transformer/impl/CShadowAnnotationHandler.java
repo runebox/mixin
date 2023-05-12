@@ -33,14 +33,20 @@ public class CShadowAnnotationHandler extends AnnotationHandler {
         Remapper.merge(transformer, mappedNode);
     }
 
-    private void checkFields(final MixinManager mixinManager, final ClassNode target, final ClassNode transformer, final MapRemapper remapper) {
+    private void checkFields(final MixinManager mixinManager, ClassNode target, final ClassNode transformer, final MapRemapper remapper) {
         Iterator<FieldNode> it = transformer.fields.iterator();
+        ClassNode origTarget = target;
         while (it.hasNext()) {
+            target = origTarget;
+
             FieldNode field = it.next();
             CShadow annotation = this.getAnnotation(CShadow.class, field, mixinManager);
             if (annotation == null) continue;
             it.remove();
 
+            if(!annotation.owner().isEmpty()) {
+                target = mixinManager.getClassTree().getTreePart(mixinManager.getClassProvider(), annotation.owner()).getNode();
+            }
             List<FieldNode> targets = ASMUtils.getFieldsFromCombi(target, annotation.value());
             if (targets.isEmpty()) throw new FieldNotFoundException(target, transformer, annotation.value());
             for (FieldNode targetField : targets) {

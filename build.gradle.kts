@@ -12,7 +12,3 @@ allprojects {
         maven(url = "https://jitpack.io")
     }
 }
-
-dependencies {
-    testImplementation(kotlin("test"))
-}

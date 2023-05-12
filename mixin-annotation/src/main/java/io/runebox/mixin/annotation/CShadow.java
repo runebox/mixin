@@ -27,4 +27,7 @@ public @interface CShadow {
     @AnnotationRemap(RemapType.SHORT_MEMBER)
     String value() default "";
 
+    @AnnotationRemap(RemapType.CLASS)
+    String owner() default "";
+
 }

@@ -1,5 +1,6 @@
 package io.runebox.mixin.utils;
 
+import io.runebox.mixin.MixinManager;
 import io.runebox.mixin.utils.tree.ClassTree;
 import io.runebox.mixin.utils.tree.IClassProvider;
 import io.runebox.mixin.utils.tree.TreeClassWriter;
@@ -118,6 +119,11 @@ public class ASMUtils {
                 methods.removeIf(method -> (method.access & Opcodes.ACC_SYNTHETIC) != 0);
             }
         }
+        return methods;
+    }
+
+    public static List<MethodNode> getStaticMethods(String combi, MixinManager mixinManager) {
+        List<MethodNode> methods = new ArrayList<>();
         return methods;
     }
 

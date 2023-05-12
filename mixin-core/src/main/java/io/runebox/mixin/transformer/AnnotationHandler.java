@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Map;
 
 import static io.runebox.mixin.utils.Types.typeDescriptor;
+import static org.objectweb.asm.Opcodes.ACC_STATIC;
 
 /**
  * The abstract base for all annotation handlers.
