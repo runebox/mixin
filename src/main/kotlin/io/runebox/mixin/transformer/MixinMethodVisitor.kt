@@ -1,4 +1,4 @@
-package io.runebox.mixin.visitor
+package io.runebox.mixin.transformer
 
 import org.objectweb.asm.MethodVisitor
 import org.objectweb.asm.Opcodes.ASM9

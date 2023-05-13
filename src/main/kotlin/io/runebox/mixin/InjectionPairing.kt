@@ -188,7 +188,7 @@ class InjectionPairing(srcClass: ClassNode, targetClass: ClassNode, val typesToR
     }
 
     private inline fun <reified T> MethodNode.readAnnotation(): String? {
-        if(visibleAnnotations == null) return null
+        if(visibleAnnotations == null) { visibleAnnotations = mutableListOf() }
         return visibleAnnotations.filter { it.desc == Type.getDescriptor(T::class.java) }
             .map { it.values }
             .filter { it.size == 2 }

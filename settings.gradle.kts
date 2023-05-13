@@ -3,3 +3,6 @@ plugins {
 }
 
 rootProject.name = "mixin"
+
+include(":client")
+include(":client-mixin")

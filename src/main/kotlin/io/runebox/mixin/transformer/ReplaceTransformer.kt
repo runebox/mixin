@@ -1,6 +1,5 @@
 package io.runebox.mixin.transformer
 
-import io.runebox.mixin.visitor.MixinMethodVisitor
 import org.objectweb.asm.tree.MethodNode
 
 class ReplaceTransformer : AbstractTransformer() {
