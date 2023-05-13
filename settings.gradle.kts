@@ -3,6 +3,3 @@ plugins {
 }
 
 rootProject.name = "mixin"
-
-include(":mixin-core")
-include(":mixin-annotation")
